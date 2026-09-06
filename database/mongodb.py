@@ -31,6 +31,16 @@ class MongoDB:
     def get_all_memories(self):
         return list(self.collection.find({} , { "_id" : 0}))
 
+    def update_memory(self , memory_id : str , update_data : dict):
+        self.collection.update_one(
+            {
+                "memory_id" : memory_id
+            },
+            {
+                "$set" : update_data
+            }
+        )
+
     def delete_memory(self , memory_id : str):
         self.collection.delete_one({
             "memory_id" : memory_id
@@ -39,5 +49,8 @@ class MongoDB:
     def count_memories(self):
         return self.collection.count_documents({})
 
+    def clear_memories(self):
+        self.collection.delete_many({})
+    
     def close(self):
         self.client.close()
