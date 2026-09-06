@@ -6,6 +6,10 @@ from pymongo import MongoClient
 from config.settings import MONGODB_URI,MONGODB_DATABASE,MONGODB_MEMORY_COLLECTION
 from models.memory import MemoryItem
 
+#============================================================================
+#                                Class Statments
+#============================================================================
+
 class MongoDB:
     def __init__(self):
         self.client = MongoClient(MONGODB_URI)
