@@ -43,83 +43,302 @@ class MemoryUpdater:
                 "operation" : "NOOP"
             }
 
-    def decide_operation(self , fact : str , similar_memories):
-        if not similar_memories:
-            similar_memory_text = "No Similar memories found."
-        else:
-            lines = []
-            for index , (memory , score) in enumerate(similar_memories , start=1):
-                lines.append(f"""
-                    {index}.
-                    Memory ID: {memory.id}
-                    Similarity : {score:.4f}
-                    Text : {memory.text}
-                """)
+    def decide_operation(
+        self,
+        fact: str,
+        similar_memories
+    ):
 
-                similar_memory_text = (
-                    "\n".join(lines)
+        print(
+            "Preparing memory decision..."
+        )
+
+
+        if not similar_memories:
+
+            similar_memory_text = (
+                "No similar memories found."
+            )
+
+        else:
+
+            lines = []
+
+            for index, (
+                memory,
+                score
+            ) in enumerate(
+                similar_memories,
+                start=1
+            ):
+
+                lines.append(
+                    f"""
+    {index}.
+    Memory ID: {memory.id}
+    Similarity: {score:.4f}
+    Text: {memory.text}
+    """
                 )
 
-        prompt = build_memory_update_prompt(candidate_fact=fact , similar_memories=similar_memory_text)
-        response = self.llm.chat([
-            {"role" : "system" , "content" : "Return only valid JSON"},
-            {"role" : "user" , "content" : prompt}
-        ], temperature=0)
+            similar_memory_text = (
+                "\n".join(lines)
+            )
 
-        return self._parse_json(response['content'])
+
+        prompt = (
+            build_memory_update_prompt(
+                candidate_fact=fact,
+
+                similar_memories=
+                    similar_memory_text,
+            )
+        )
+
+
+        print(
+            "Sending memory decision to OpenAI..."
+        )
+
+
+        response = (
+            self.llm.chat(
+                [
+                    {
+                        "role": "system",
+                        "content":
+                            "Return only valid JSON.",
+                    },
+
+                    {
+                        "role": "user",
+                        "content":
+                            prompt,
+                    },
+                ],
+
+                temperature=0
+            )
+        )
+
+
+        print(
+            "OpenAI memory decision received."
+        )
+
+
+        return self._parse_json(
+            response["content"]
+        )
         
 
     # --------------------------------Process Fact--------------------------------
-    def _process_fact(self , fact : str , turn_index : int):
+    def _process_fact(
+        self,
+        fact: str,
+        turn_index: int
+    ):
 
-        # Create embedding
-        fact_embedding = self.embeddings.get_embedding(fact)
+        print("\n" + "=" * 60)
+        print("MEMORY UPDATE STARTED")
+        print("=" * 60)
 
-        # Search similar memories
-        similar_memories = self.memory_store.find_semantically_similar_memories(query_embedding=fact_embedding , top_k=SIMILAR_MEMORIES_FOR_UPDATE , threshold=MEMORY_SIMILARITY_THRESHOLD)
+        print(f"FACT: {fact}")
 
-        # Ask GPT what to do
-        decision = self.decide_operation(fact , similar_memories)
-        operation = decision.get("operation" , "NOOP").upper()
+        # --------------------------------------------------------
+        # STEP 1 — EMBEDDING
+        # --------------------------------------------------------
 
-        # Add
+        print("\n[1/4] Creating embedding...")
+
+        fact_embedding = (
+            self.embeddings
+            .get_embedding(fact)
+        )
+
+        print(
+            f"[1/4] Embedding created successfully "
+            f"({len(fact_embedding)} dimensions)"
+        )
+
+
+        # --------------------------------------------------------
+        # STEP 2 — SEARCH SIMILAR MEMORIES
+        # --------------------------------------------------------
+
+        print(
+            "\n[2/4] Searching similar memories..."
+        )
+
+        similar_memories = (
+            self.memory_store
+            .find_semantically_similar_memories(
+                query_embedding=fact_embedding,
+
+                top_k=
+                    SIMILAR_MEMORIES_FOR_UPDATE,
+
+                threshold=
+                    MEMORY_SIMILARITY_THRESHOLD,
+            )
+        )
+
+        print(
+            f"[2/4] Found "
+            f"{len(similar_memories)} "
+            f"similar memories"
+        )
+
+
+        # --------------------------------------------------------
+        # STEP 3 — ASK CHATGPT
+        # --------------------------------------------------------
+
+        print(
+            "\n[3/4] Asking ChatGPT "
+            "whether to ADD / UPDATE / NOOP..."
+        )
+
+        decision = (
+            self.decide_operation(
+                fact,
+                similar_memories
+            )
+        )
+
+        print(
+            f"[3/4] ChatGPT decision: "
+            f"{decision}"
+        )
+
+
+        operation = (
+            decision
+            .get(
+                "operation",
+                "NOOP"
+            )
+            .upper()
+        )
+
+
+        # --------------------------------------------------------
+        # STEP 4 — APPLY DECISION
+        # --------------------------------------------------------
+
         if operation == "ADD":
+
+            print(
+                "\n[4/4] Adding new memory..."
+            )
+
             memory = MemoryItem(
                 text=fact,
-                embedding=fact_embedding.tolist(),
-                source_turn_indices=[turn_index]
+
+                embedding=
+                    fact_embedding.tolist(),
+
+                source_turn_indices=[
+                    turn_index
+                ],
             )
-            self.memory_store.add_memory_item(memory)
+
+            self.memory_store.add_memory_item(
+                memory
+            )
+
+            print(
+                "[4/4] Memory added successfully"
+            )
+
+            print("=" * 60)
+
             return {
-                "operation" : "ADD",
-                "memory_id" : memory.id,
-                "fact" : fact 
+                "operation": "ADD",
+
+                "memory_id": memory.id,
+
+                "fact": fact,
             }
 
-        # Update 
-        if operation == "UPDATE":
-            target_memory_id = decision.get("target_memory_id")
-            updated_memory_text = decision.get("updated_memory_text")
 
-            if(target_memory_id and updated_memory_text):
-                updated_embedding = self.embeddings.get_embedding(updated_memory_text)
-                success = self.memory_store.update_existing_memory_item(
-                    memory_id=target_memory_id,
-                    new_text=updated_memory_text,
-                    new_embedding=updated_embedding,
-                    turn_indices=[turn_index]
+        if operation == "UPDATE":
+
+            target_memory_id = (
+                decision.get(
+                    "target_memory_id"
+                )
+            )
+
+            updated_memory_text = (
+                decision.get(
+                    "updated_memory_text"
+                )
+            )
+
+            if (
+                target_memory_id
+                and updated_memory_text
+            ):
+
+                print(
+                    "\n[4/4] Updating existing memory..."
+                )
+
+                updated_embedding = (
+                    self.embeddings
+                    .get_embedding(
+                        updated_memory_text
+                    )
+                )
+
+                success = (
+                    self.memory_store
+                    .update_existing_memory_item(
+                        memory_id=
+                            target_memory_id,
+
+                        new_text=
+                            updated_memory_text,
+
+                        new_embedding=
+                            updated_embedding,
+
+                        turn_indices=[
+                            turn_index
+                        ],
+                    )
                 )
 
                 if success:
+
+                    print(
+                        "[4/4] Memory updated successfully"
+                    )
+
+                    print("=" * 60)
+
                     return {
-                        "operation" : "UPDATE",
-                        "memory_id" : target_memory_id,
-                        "fact" : updated_memory_text
+                        "operation":
+                            "UPDATE",
+
+                        "memory_id":
+                            target_memory_id,
+
+                        "fact":
+                            updated_memory_text,
                     }
 
-        #  NOOP
+
+        print(
+            "\n[4/4] No memory change required"
+        )
+
+        print("=" * 60)
+
         return {
-            "operation" : "NOOP",
-            "fact" : fact 
+            "operation": "NOOP",
+
+            "fact": fact,
         }
     

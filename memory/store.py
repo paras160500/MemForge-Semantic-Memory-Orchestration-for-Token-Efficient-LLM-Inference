@@ -58,6 +58,8 @@ class MemoryStore:
 
     # ----------------------------------Semantic Search------------------------------------------
     def find_semantically_similar_memories(self,query_embedding , top_k : int = 3 , threshold : float = 0.5) -> List[Tuple[MemoryItem , float]]:
+        top_k = int(top_k)
+        threshold = float(threshold)
         documents = self.database.get_all_memories()
         if not documents:
             return [] 

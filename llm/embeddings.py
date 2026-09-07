@@ -11,7 +11,7 @@ from config.settings import OPENAI_API_KEY , OPENAI_EMBEDDING_MODEL, OPENAI_EMBE
 class EmbeddingService:
 
     def __init__(self):
-        self.client = OpenAI(api_key=OPENAI_API_KEY)
+        self.client = OpenAI(api_key=OPENAI_API_KEY,timeout=60.0,max_retries=2)
         self.model = OPENAI_EMBEDDING_MODEL
         self.dimensions = int(OPENAI_EMBEDDING_DIMENSIONS)
 

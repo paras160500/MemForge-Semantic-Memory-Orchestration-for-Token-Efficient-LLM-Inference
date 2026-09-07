@@ -19,6 +19,9 @@ from app.ui import (
     render_header,
     render_sidebar,
     render_memory_card,
+    render_flow,
+    render_stat_cards,
+    render_architecture,
     render_result,
 )
 
@@ -129,6 +132,7 @@ chat_tab, memory_tab, architecture_tab = st.tabs(
 # ============================================================
 
 with chat_tab:
+    render_flow()
     st.subheader("Talk to your AI")
     st.caption(
         "Statements can become long-term memories. "
@@ -327,6 +331,11 @@ with memory_tab:
 
     memory_count = memory_store.count()
 
+    render_stat_cards(
+        memory_count=memory_count,
+        embedding_dimensions=embeddings.get_embedding_dimensions(),
+    )
+
     col1, col2 = st.columns(2)
 
     with col1:
@@ -372,114 +381,4 @@ with memory_tab:
 # ============================================================
 
 with architecture_tab:
-    st.subheader("🏗️ System Architecture")
-
-    st.markdown(
-        """
-        ### User Input
-
-        ↓
-
-        ### Input Classifier
-
-        **OpenAI ChatGPT**
-
-        ↓
-
-        ┌──────────────────────┬──────────────────────┐
-
-        │                      │
-
-        ▼                      ▼
-
-        **STATEMENT**          **QUERY**
-
-        │                      │
-
-        ▼                      ▼
-
-        **Fact Extraction**    **Embedding**
-
-        │                      │
-
-        │                      ▼
-
-        │                 **Semantic Search**
-
-        │                      │
-
-        ▼                      ▼
-
-        **Embedding**      **Relevant Memories**
-
-        │                      │
-
-        ▼                      │
-
-        **Similarity Search**  │
-
-        │                      │
-
-        ▼                      ▼
-
-        **ChatGPT Decision**  **ChatGPT**
-
-        │                      │
-
-        ┌───────┬───────┐      ▼
-
-        │       │       │    **Answer**
-
-        ▼       ▼       ▼
-
-        **ADD** **UPDATE** **NOOP**
-
-        │       │       │
-
-        └───────┼───────┘
-
-                ▼
-
-        ### MongoDB Atlas
-
-        Persistent Long-Term Memory
-        """
-    )
-
-    st.divider()
-
-    st.markdown("### 🔧 Technology Stack")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.markdown(
-            """
-            **🤖 AI**
-
-            - OpenAI ChatGPT
-            - OpenAI Embeddings
-            """
-        )
-
-    with col2:
-        st.markdown(
-            """
-            **🧠 Memory**
-
-            - Semantic Retrieval
-            - ADD / UPDATE / NOOP
-            - Cosine Similarity
-            """
-        )
-
-    with col3:
-        st.markdown(
-            """
-            **🗄️ Infrastructure**
-
-            - MongoDB Atlas
-            - Streamlit
-            - Python
-            """
-        )
+    render_architecture()
