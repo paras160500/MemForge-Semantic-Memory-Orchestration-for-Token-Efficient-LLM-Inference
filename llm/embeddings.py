@@ -13,7 +13,7 @@ class EmbeddingService:
     def __init__(self):
         self.client = OpenAI(api_key=OPENAI_API_KEY)
         self.model = OPENAI_EMBEDDING_MODEL
-        self.dimensions = OPENAI_EMBEDDING_DIMENSIONS
+        self.dimensions = int(OPENAI_EMBEDDING_DIMENSIONS)
 
     def get_embedding(self , text : str) -> np.ndarray:
         response = self.client.embeddings.create(model = self.model , input=text , dimensions=self.dimensions)

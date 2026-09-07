@@ -8,7 +8,7 @@ from llm.client import OpenAIClient
 from llm.embeddings import EmbeddingService
 from llm.prompts import build_memory_update_prompt
 from config.settings import SIMILAR_MEMORIES_FOR_UPDATE,MEMORY_SIMILARITY_THRESHOLD
-from store import MemoryStore
+from memory.store import MemoryStore
 
 #============================================================================
 #                             Updater Statments

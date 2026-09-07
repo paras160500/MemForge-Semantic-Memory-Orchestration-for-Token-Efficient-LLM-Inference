@@ -13,7 +13,7 @@ class OpenAIClient:
         self.model = OPENAI_CHAT_MODEL
 
     def chat(self , messages , temperature = 0):
-        response = self.client.chat.completions.create(model=self.model , messages=messages , temperature=temperature)
+        response = self.client.chat.completions.create(model=self.model , messages=messages)
         message = response.choices[0].message
         usage = response.usage
         prompt_tokens = (getattr(usage , "prompt_tokens" , 0) if usage else 0)
